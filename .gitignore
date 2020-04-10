@@ -137,3 +137,12 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# LaTeX
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*/report/report.pdf
+*.synctex.gz
