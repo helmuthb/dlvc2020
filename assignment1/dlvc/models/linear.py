@@ -4,6 +4,7 @@ from ..model import Model
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class LinearClassifier(Model):
     '''
@@ -30,7 +31,9 @@ class LinearClassifier(Model):
         # initialize weight tensor
         self.weights = torch.randn(num_classes, input_dim, requires_grad=True)
         # create loss calculator
-        loss_fn = nn.CrossEntropyLoss()
+        self.loss_fn = nn.CrossEntropyLoss()
+        # current velocity
+        self.velocity = torch.zeros(input_dim)
 
 
     def input_shape(self) -> tuple:
@@ -60,16 +63,23 @@ class LinearClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
+        # Nesterov? Then calculate gradient via look-ahead
+        if self.nesterov:
+            weights = self.weights.add(self.velocity)
+        else:
+            weights = self.weights
         # Calculate target (prediction)
-        prediction = self.weights * data
+        prediction = torch.mm(torch.from_numpy(data), weights.t())
         # Calculate loss
-        loss = self.loss_fn(prediction, labels)
+        loss = self.loss_fn(prediction, torch.from_numpy(labels))
         self.weights.retain_grad() # include this tensor in the computation graph
         loss.backward() # compute gradients with backpropagation
-        # gradient of weights
-        grad_w = self.weights.grad
-
-        # TODO implement (update weights with gradient descent)
+        # update velocity
+        self.velocity = self.momentum * self.velocity - self.lr * self.weights.grad
+        # update weights
+        self.weights = self.weights.add(self.velocity)
+        # return calculated loss
+        return loss.item()
 
     def predict(self, data: np.ndarray) -> np.ndarray:
         '''
@@ -81,4 +91,5 @@ class LinearClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        # TODO implement
+        # Calculate target (prediction)
+        return torch.mm(torch.from_numpy(data), self.weights.t()).detach().numpy()

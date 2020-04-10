@@ -99,11 +99,8 @@ class Accuracy(PerformanceMeasure):
         '''
         Return a string representation of the performance.
         '''
-
         return f"accuracy: {self.accuracy()}"
         # return something like "accuracy: 0.395"
-
-        pass
 
     def __lt__(self, other) -> bool:
         '''
@@ -134,4 +131,4 @@ class Accuracy(PerformanceMeasure):
         # number of correct / number of all
         if self._cnt_all == 0:
             return 0.
-        return self._cnt_correct / self._cnt_all
+        return float(self._cnt_correct) / self._cnt_all

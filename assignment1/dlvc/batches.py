@@ -71,7 +71,7 @@ class BatchGenerator:
         if self._shuffle:
             random.shuffle(idx)
         batch_data = []
-        batch_labels = []
+        batch_label = []
         batch_idx = []
         for cur in idx: 
             # do we have a batch to yield?
@@ -79,12 +79,12 @@ class BatchGenerator:
                 # yield batch
                 batch = Batch()
                 batch.data = np.array(batch_data)
-                batch.labels = np.array(batch_labels)
+                batch.label = np.array(batch_label)
                 batch.idx = np.array(batch_idx)
                 yield batch
                 # reset lists
                 batch_data = []
-                batch_labels = []
+                batch_label = []
                 batch_idx = []
             # add next element to lists
             elem = self._dataset[cur]
@@ -92,12 +92,12 @@ class BatchGenerator:
                 batch_data.append(self._op(elem.data))
             else:
                 batch_data.append(elem.data)
-            batch_labels.append(elem.label)
+            batch_label.append(elem.label)
             batch_idx.append(elem.idx)
         if len(batch_data) > 0:
             # yield last batch
             batch = Batch()
             batch.data = np.array(batch_data)
-            batch.labels = np.array(batch_labels)
+            batch.label = np.array(batch_label)
             batch.idx = np.array(batch_idx)
             yield batch
