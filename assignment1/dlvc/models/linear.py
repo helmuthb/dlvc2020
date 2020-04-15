@@ -22,6 +22,10 @@ class LinearClassifier(Model):
         nesterov: training with or without Nesterov momentum.
         '''
 
+        # check whether GPU support is available
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # actually, running all on CPU is faster here
+        self.device = torch.device('cpu')
         # store the input parameters
         self.input_dim = input_dim
         self.num_classes = num_classes
@@ -29,11 +33,11 @@ class LinearClassifier(Model):
         self.momentum = momentum
         self.nesterov = nesterov
         # initialize weight tensor
-        self.weights = torch.randn(num_classes, input_dim, requires_grad=True)
+        self.weights = torch.randn(num_classes, input_dim, requires_grad=True, device=self.device)
         # create loss calculator
         self.loss_fn = nn.CrossEntropyLoss()
         # current velocity
-        self.velocity = torch.zeros(input_dim)
+        self.velocity = torch.zeros(input_dim, device=self.device)
 
 
     def input_shape(self) -> tuple:
@@ -69,9 +73,9 @@ class LinearClassifier(Model):
         else:
             weights = self.weights
         # Calculate target (prediction)
-        prediction = torch.mm(torch.from_numpy(data), weights.t())
+        prediction = torch.mm(torch.from_numpy(data).to(self.device), weights.t())
         # Calculate loss
-        loss = self.loss_fn(prediction, torch.from_numpy(labels))
+        loss = self.loss_fn(prediction, torch.from_numpy(labels).to(self.device))
         self.weights.retain_grad() # include this tensor in the computation graph
         loss.backward() # compute gradients with backpropagation
         # update velocity
@@ -92,4 +96,4 @@ class LinearClassifier(Model):
         '''
 
         # Calculate target (prediction)
-        return torch.mm(torch.from_numpy(data), self.weights.t()).detach().numpy()
+        return torch.mm(torch.from_numpy(data).to(self.device), self.weights.t()).detach().cpu().numpy()
