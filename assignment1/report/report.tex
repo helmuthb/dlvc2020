@@ -11,7 +11,7 @@
 \setcopyright{rightsretained}
 \begin{document}
 \title{Deep Learning for Visual Computing}
-\subtitle{Exercise 1: Linear Model}
+\subtitle{Group 12, Exercise 1: Linear Model}
 \author{SHU Yuting}
 \email{e11931687@student.tuwien.ac.at}
 \affiliation{Mat.Nr. 11931687}
@@ -147,20 +147,40 @@ We have been performing a random search for good hyperparameter
 values of the learning rate and the momentum, by trying 100 random
 values (logarithmic scale for learning rate, linear scale for momentum).
 
-These were the results obtained from training and evaluating
-the simple linear model:
-\begin{lstlisting}[basicstyle=\ttfamily\small]
-Validation: accuracy: 0.6031357177853993
-Parameters: momentum=0.869774239381628
-            lr=0.3726148634713726
-Test: accuracy: 0.6135
-\end{lstlisting}
-
 The following plot tries to depict the influence of the hyperparameters
 on the validation
 accuracy.
 
 \includegraphics[width=0.5\textwidth]{plot.pdf}
+
+These were the results obtained from training and evaluating
+the simple linear model:
+\begin{lstlisting}[basicstyle=\ttfamily\small]
+Validation: accuracy: 0.600685938265556
+Parameters: momentum=0.4934614594318384
+            lr=0.7796364986782409
+Test: accuracy: 0.603
+\end{lstlisting}
+
+\subsection{Discussion}
+
+The plot of the influence of the hyperparameter on the validation accuracy
+shows that there are some areas where the accuracy is small.
+For example, very small learning rates (less than 0.1) give mediocre results
+(near 0.5 - which is the accuracy of throwing a coin).
+This makes sense, as we are only using 10 epochs to train the classifier,
+therefore it needs some minimum learning rate to be able to converge.
+
+On the other hand, there are no areas of (consistently) good hyperparameter values.
+The selected optimal point for the hyperparameters is very near to other
+point with much worse accuracy, so having a good accuracy value is rather a matter of luck.
+This is also an indication that the model itself is not a good fit for the problem.
+
+From the accuracy on both validation and test data set we see that the model
+was able to achieve an accuracy of about 60\%.
+Given the simplicity of the model (performing a linear combination of the pixel
+values) this is actually quite good, but for any practical purposes this is
+not useful.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{report}
