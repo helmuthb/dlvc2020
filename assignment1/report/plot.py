@@ -22,8 +22,12 @@ with open('../results.csv', 'r') as f:
 # find maximum Z value
 Zmax = max(Z)
 Imax = [i for i in range(len(Z)) if Z[i] == Zmax][0]
+# append it to the end so that the best value is plotted over
+Z.append(Zmax)
+X.append(X[Imax])
+Y.append(Y[Imax])
 
-# accuracy to color
+# map accuracy to color
 norm = colors.Normalize(vmin=min(Z), vmax=max(Z))
 cmap = cm.viridis
 
