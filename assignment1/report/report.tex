@@ -26,7 +26,7 @@ parameters of learning rate and momentum, and evaluated against the
 validation set.
 The best model was then evaluated against the test set.
 \end{abstract}
-\keywords{Deep Learning, Linear Model, Visual Computing, PyTorch}
+\keywords{Deep Learning, Linear Model, Visual Computing, Image Processing, PyTorch}
 \maketitle
 \section{Task description}
 Based on a skeleton we were tasked to implement a simple classification
@@ -54,9 +54,13 @@ Therefore we have performed all calculations on CPU.
 Image classification is the process to identify and categorize images
 into classes.
 
-An image is assumed to belong to exactly one of several classes, and
+According to the target class, we could divide image classification into three categories, binary image classification, multi-class image classification and multi-label image classification.
+
+Binary image classification separates images into exactly one of two classes. And in multi-class image classification, an image is assumed to belong to exactly one of more than two classes, and
 in the process of the image classification the class of an image
 is identified.
+
+In multi-label classification, there are two classes or more and every image belongs to one or multiple classes at the same time. For instance, guess the genre(action, drama, comedy, etc.) of a movie from a wall poster.
 
 The individual image is often called "sample", and the corresponding
 class is called "label".
