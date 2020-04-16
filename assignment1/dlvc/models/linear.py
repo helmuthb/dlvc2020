@@ -67,6 +67,27 @@ class LinearClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
+        # Error handling:
+        # 1. input must be numpy arrays of specified shape
+        if not isinstance(data, np.ndarray):
+            raise TypeError('The input `data` must be a numpy array')
+        if not isinstance(labels, np.ndarray):
+            raise TypeError('The input `labels` must be a numpy array')
+        # 2. input must be of the correct shape and compatible with each other
+        if len(data.shape) != 2:
+            raise ValueError('The input `data` must be a 2-dimensional array')
+        if len(labels.shape) != 1:
+            raise ValueError('The input `labels` must be a 2-dimensional array')
+        if data.shape[0] != labels.shape[0]:
+            raise ValueError('Arrays `labels` and `data` must have the same number of rows')
+        if data.shape[1] != self.input_dim:
+            raise ValueError('The input `data` must be of shape (n, num_classes)')
+        # 3. data values must be of type np.float32
+        if data.dtype != np.float32:
+            raise TypeError('The input `data` must be a numpy array of float32 values')
+        if labels.dtype.kind != 'i':
+            raise TypeError('The input `labels` must be a numpy array of integer values')
+        # all other errors will (hopefully) raise a RuntimeError
         # Nesterov? Then calculate gradient via look-ahead
         if self.nesterov:
             weights = self.weights.add(self.velocity)
@@ -89,11 +110,21 @@ class LinearClassifier(Model):
         '''
         Predict softmax class scores from input data.
         Data are the input data, with a shape compatible with input_shape().
-        The label array has shape (n, output_shape()) with n being the number of input samples.
+        The label array has shape (n, num_classes) with n being the number of input samples.
         Raises TypeError on invalid argument types.
         Raises ValueError on invalid argument values.
         Raises RuntimeError on other errors.
         '''
 
+        # Error handling:
+        # 1. input must be numpy array of specified shape
+        if not isinstance(data, np.ndarray):
+            raise TypeError('The input `data` must be a numpy array')
+        # 2. input must be of the correct shape
+        if len(data.shape) != 2:
+            raise ValueError('The input `data` must be a 2-dimensional array')
+        if data.shape[1] != self.input_dim:
+            raise ValueError('The input `data` must be of shape (n, num_classes)')
+        # all other errors will (hopefully) raise a RuntimeError
         # Calculate target (prediction)
         return torch.mm(torch.from_numpy(data).to(self.device), self.weights.t()).detach().cpu().numpy()

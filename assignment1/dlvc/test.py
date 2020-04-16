@@ -84,15 +84,30 @@ class Accuracy(PerformanceMeasure):
         Raises ValueError if the data shape or values are unsupported.
         '''
 
-        # add preduction
-        size = len(prediction)
+        # Error handling:
+        # 1. prediction and target must be numpy arrays
+        if not isinstance(prediction, np.ndarray):
+            raise ValueError("`prediction` must be a numpy array")
+        if not isinstance(target, np.ndarray):
+            raise ValueError("`target` must be a numpy array")
+        # 2. prediction must have shape (s,c), i.e. it must be 2-dim
+        if len(prediction.shape) != 2:
+            raise ValueError("`prediction` must be a 2-dim array")
+        # 3. target must have shape (s,), i.e. it must have the same
+        # number of rows as prediction and it must be 1-dim
+        if len(target.shape) != 1:
+            raise ValueError("`taget` must be a 1-dim array")
         if prediction.shape[0] != target.shape[0]:
             raise ValueError("Both prediction and target must have the same number of rows")
+        # 4. target must have values in the range 0 and c
+        c = prediction.shape[1]
+        if np.any(target < 0) or np.any(target > c-1):
+            raise ValueError("`target` values must be between 0 and c-1")
         # get guessed classes
         pred_classes = np.argmax(prediction, axis=1)
         if pred_classes.shape != target.shape:
             raise ValueError("Shape of prediction or target are not supported")
-        self._cnt_all += size
+        self._cnt_all += prediction.shape[0]
         self._cnt_correct += np.sum(pred_classes == target)
 
     def __str__(self):

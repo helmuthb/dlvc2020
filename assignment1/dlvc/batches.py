@@ -40,6 +40,19 @@ class BatchGenerator:
         Raises ValueError on invalid argument values, such as if num is > len(dataset).
         '''
 
+        # error detection
+        # 1. raise TypeError on invalid argument types
+        if not isinstance(dataset, Dataset):
+            raise TypeError("Argument `dataset` must be a Dataset")
+        if not isinstance(num, int):
+            raise TypeError("Argument `num` must be an integer")
+        if not isinstance(shuffle, bool):
+            raise TypeError("Argument `shuffle` must be a boolean")
+        # No check on op, as parameterized generics cannot be
+        # used with class or instance checks
+        # 2. raise ValueError on invalid argument values
+        if num > len(dataset):
+            raise ValueError("Number of samples in batch must be smaller than total number")
         # save number of samples
         self._num = num
         # save dataset
@@ -50,9 +63,6 @@ class BatchGenerator:
         self._len = len(dataset)
         # operation
         self._op = op
-        # error detection
-        if num > self._len:
-            raise ValueError("Number of samples in batch must be smaller than total number")
 
     def __len__(self) -> int:
         '''
@@ -94,6 +104,8 @@ class BatchGenerator:
                 batch_data.append(elem.data)
             batch_label.append(elem.label)
             batch_idx.append(elem.idx)
+        # we are finished with the loop but maybe not all elements
+        # were emitted.
         if len(batch_data) > 0:
             # yield last batch
             batch = Batch()

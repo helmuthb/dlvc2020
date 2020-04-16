@@ -4,12 +4,18 @@ from dlvc.models.linear import LinearClassifier
 from dlvc.test import Accuracy
 import dlvc.ops as ops
 import numpy as np
+import torch
 import random
 from dlvc.datasets.pets import PetsDataset
 from dlvc.batches import BatchGenerator
 from dlvc.dataset import Subset
 
 TrainedModel = namedtuple('TrainedModel', ['model', 'accuracy'])
+
+# initialize RNG for reproducability
+random.seed(42)
+np.random.seed(42)
+torch.manual_seed(42)
 
 # Step 1: load the data sets (TRAIN, VALIDATION & TEST)
 train_data = PetsDataset("../cifar-10-batches-py", Subset.TRAINING)
@@ -42,23 +48,18 @@ def train_model(lr: float, momentum: float) -> TrainedModel:
     n_epochs = 10
     for i in range(n_epochs):
         for batch in train_batches:
-            # reshape batch (make each sample flat)
-            data = batch.data.reshape(-1, 3072)
             # train classifier
-            clf.train(data, batch.label)
+            clf.train(batch.data, batch.label)
 
     accuracy = Accuracy()
     for batch in val_batches:
-        # reshape batch (make each sample flat)
-        data = batch.data.reshape(-1, 3072)
         # predict and update accuracy
-        prediction = clf.predict(data)
+        prediction = clf.predict(batch.data)
         accuracy.update(prediction, batch.label)
 
     return TrainedModel(clf, accuracy)
 
 # Step 4: random search for good parameter values
-random.seed(42) # initialize RNG for reproducability
 best_model = TrainedModel(None, Accuracy()) # accuracy 0
 best_lr = -1
 best_momentum = -1
@@ -88,10 +89,8 @@ Parameters: momentum={best_momentum}
 # calculate accuracy of the model on the validation set
 accuracy = Accuracy()
 for batch in test_batches:
-    # reshape batch (make each sample flat)
-    data = batch.data.reshape(-1, 3072)
     # predict and update accuracy
-    prediction = best_model.model.predict(data)
+    prediction = best_model.model.predict(batch.data)
     accuracy.update(prediction, batch.label)
 
 print(f"Test: {accuracy}")
