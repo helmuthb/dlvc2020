@@ -24,33 +24,28 @@ class CnnClassifier(Model):
         wd: weight decay to use for training.
         '''
 
-        # TODO implement
-
-        # Inside the train() and predict() functions you will need to know whether the network itself
-        # runs on the CPU or on a GPU, and in the latter case transfer input/output tensors via cuda() and cpu().
-        # To termine this, check the type of (one of the) parameters, which can be obtained via parameters() (there is an is_cuda flag).
-        # You will want to initialize the optimizer and loss function here.
-        # Note that PyTorch's cross-entropy loss includes normalization so no softmax is required
-
-        pass
+        self.input_shape = input_shape
+        self.num_classes = num_classes
+        self.loss_fn = nn.CrossEntropyLoss()
+        self.softmax = nn.Softmax(dim=1)
+        self.net = net
+        self.optimizer = torch.optim.SGD(net.parameters(), lr=lr, weight_decay=wd, momentum=0.9, nesterov=True)
+        first_parameter = next(net.parameters())
+        self.is_cuda = first_parameter.is_cuda
 
     def input_shape(self) -> tuple:
         '''
         Returns the expected input shape as a tuple.
         '''
 
-        # TODO implement
-
-        pass
+        return self.input_shape
 
     def output_shape(self) -> tuple:
         '''
         Returns the shape of predictions for a single sample as a tuple, which is (num_classes,).
         '''
 
-        # TODO implement
-
-        pass
+        return (self.num_classses,)
 
     def train(self, data: np.ndarray, labels: np.ndarray) -> float:
         '''
@@ -63,11 +58,49 @@ class CnnClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        # TODO implement
-        # Make sure to set the network to train() mode
-        # See above comments on CPU/GPU
+        # Error handling:
+        # 1. input must be numpy arrays of specified shape
+        if not isinstance(data, np.ndarray):
+            raise TypeError('The input `data` must be a numpy array')
+        if not isinstance(labels, np.ndarray):
+            raise TypeError('The input `labels` must be a numpy array')
+        # 2. input must be of the correct shape and compatible with each other
+        if len(data.shape) != 4:
+            raise ValueError('The input `data` must be a 4-dimensional tensor')
+        if len(labels.shape) != 1:
+            raise ValueError('The input `labels` must be a 1-dimensional array')
+        if data.shape[0] != labels.shape[0]:
+            raise ValueError('Arrays `labels` and `data` must have the same number of rows')
+        if data.shape[1:] != self.input_shape[1:]:
+            raise ValueError('The input `data` must be of shape {self.input_shape} (except the first dimension)')
+        # 3. data values must be of type np.float32
+        if data.dtype != np.float32:
+            raise TypeError('The input `data` must be a numpy array of float32 values')
+        # 4. labels must be integer
+        if labels.dtype.kind != 'i':
+            raise TypeError('The input `labels` must be a numpy array of integer values')
+        # 5. labels must be in the range [0, num_classes-1]
+        if np.min(labels) < 0 or np.max(labels) >= self.num_classes:
+            raise ValueError(f'The input `labels` must be between 0 and {num_classes-1}')
+        # all other errors will (hopefully) raise a RuntimeError
 
-        pass
+        # set training mode on the network
+        self.net.train(True)
+        # create PyTorch tensors from the data
+        pt_data = torch.from_numpy(data)
+        pt_labels = torch.from_numpy(labels)
+        # copy to GPU if required
+        if self.is_cuda:
+            pt_data = pt_data.cuda()
+            pt_labels = pt_labels.cuda()
+        # reset gradients
+        self.optimizer.zero_grad()
+        outputs = self.net(pt_data)
+        loss = self.loss_fn(outputs, pt_labels)
+        loss.backward()
+        self.optimizer.step()
+        # training loss: in loss
+        return loss.item()
 
     def predict(self, data: np.ndarray) -> np.ndarray:
         '''
@@ -79,10 +112,23 @@ class CnnClassifier(Model):
         Raises RuntimeError on other errors.
         '''
 
-        # TODO implement
-
-        # Pass the network's predictions through a nn.Softmax layer to obtain softmax class scores
-        # Make sure to set the network to eval() mode
-        # See above comments on CPU/GPU
-
-        pass
+        # Error handling:
+        # 1. input must be numpy array of specified shape
+        if not isinstance(data, np.ndarray):
+            raise TypeError('The input `data` must be a numpy array')
+        # 2. input must be of the correct shape
+        if len(data.shape) != 4:
+            raise ValueError('The input `data` must be a 4-dimensional tensor')
+        if data.shape[1:] != self.input_shape[1:]:
+            raise ValueError('The input `data` must be of shape {self.input_shape} (except the first dimension)')
+        # all other errors will (hopefully) raise a RuntimeError
+        # Calculate target (prediction) via model
+        self.net.eval()
+        # create PyTorch tensors from the data
+        pt_data = torch.from_numpy(data)
+        # copy to GPU if required
+        if self.is_cuda:
+            pt_data = pt_data.cuda()
+        pred = self.net(pt_data).detach()
+        # always calling cpu() (it does not cost more than an if would)
+        return self.softmax(pred).cpu().numpy()

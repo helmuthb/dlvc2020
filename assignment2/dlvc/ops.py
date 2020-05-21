@@ -63,27 +63,30 @@ def hwc2chw() -> Op:
     Flip a 3D array with shape HWC to shape CHW.
     '''
 
-    # TODO implement (see np.transpose)
-
-    pass
+    def op(sample: np.ndarray) -> np.ndarray:
+        return np.transpose(sample, (2, 0, 1))
+    
+    return op
 
 def chw2hwc() -> Op:
     '''
     Flip a 3D array with shape CHW to HWC.
     '''
 
-    # TODO implement (see np.transpose)
-
-    pass
+    def op(sample: np.ndarray) -> np.ndarray:
+        return np.transpose(sample, (1, 2, 0))
+    
+    return op
 
 def hflip() -> Op:
     '''
     Flip arrays with shape HWC horizontally with a probability of 0.5.
     '''
 
-    # TODO implement (numpy.flip will be helpful)
+    def op(sample: np.ndarray) -> np.ndarray:
+        return np.flip(sample, 0)
 
-    pass
+    return op
 
 def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     '''
@@ -93,7 +96,10 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     Raises ValueError if sz exceeds the array width/height after padding.
     '''
 
-    # TODO implement
-    # https://numpy.org/doc/1.18/reference/generated/numpy.pad.html will be helpful
+    def op(sample: np.ndarray) -> np.ndarray:
+        if pad > 0:
+            sample = np.pad(sample, [pad, pad, 0], pad_mode)
+        if sz > sample.shape[0] or sz > sample.shape[1]:
+            raise ValueError(f"Sample too small ({sample.shape}) for cropping size {sz}")
 
-    pass
+    return op
