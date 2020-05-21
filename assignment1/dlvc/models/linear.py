@@ -95,7 +95,7 @@ class LinearClassifier(Model):
             weights = self.weights
         # Calculate target (prediction)
         prediction = torch.mm(torch.from_numpy(data).to(self.device), weights.t())
-        # Calculate loss
+        # Calculate loss (CrossEntropyLoss includes softmax already)
         loss = self.loss_fn(prediction, torch.from_numpy(labels).to(self.device))
         self.weights.retain_grad() # include this tensor in the computation graph
         loss.backward() # compute gradients with backpropagation
@@ -126,5 +126,6 @@ class LinearClassifier(Model):
         if data.shape[1] != self.input_dim:
             raise ValueError('The input `data` must be of shape (n, num_classes)')
         # all other errors will (hopefully) raise a RuntimeError
-        # Calculate target (prediction)
-        return torch.mm(torch.from_numpy(data).to(self.device), self.weights.t()).detach().cpu().numpy()
+        # Calculate target (prediction) via model
+        pred = torch.mm(torch.from_numpy(data).to(self.device), self.weights.t()).detach()
+        return F.softmax(pred, dim=1).cpu().numpy()
