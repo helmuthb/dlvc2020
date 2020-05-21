@@ -1,6 +1,7 @@
 import os
 import time
 import math
+import heapq
 from collections import namedtuple
 
 import cv2
@@ -148,8 +149,12 @@ if __name__ == '__main__':
     fn = Fn(args.fpath, args.eps)
     vis = fn.visualize()
     loc = torch.tensor([args.sx1, args.sx2], requires_grad=True)
-
-    optimizer = torch.optim.SGD([loc], lr=args.learning_rate, momentum=args.beta, nesterov=args.nesterov)
+    # priority queue: top n results
+    best_n = []
+    # breakpoint n: when the value is no longer in the top-n
+    n = 20
+    # optimizer = torch.optim.SGD([loc], lr=args.learning_rate, momentum=args.beta, nesterov=args.nesterov)
+    optimizer = torch.optim.AdamW([loc], lr=args.learning_rate, eps=args.eps, weight_decay=0)
 
     # Perform gradient descent using a PyTorch optimizer
     # See https://pytorch.org/docs/stable/optim.html for how to use it
@@ -157,6 +162,14 @@ if __name__ == '__main__':
         old = (int(loc[0].item()), int(loc[1].item()))
         optimizer.zero_grad()
         value = AutogradFn.apply(fn, loc)
+        # push value on heap
+        if len(best_n) >= n:
+            worst = heapq.heappushpop(best_n, -value)
+            if (-value) == worst:
+                # break the loop
+                exit(0)
+        else:
+            heapq.heappush(best_n, -value)
         value.backward()
         optimizer.step()
         print(loc[0].item(), loc[1].item())
@@ -164,4 +177,4 @@ if __name__ == '__main__':
         # Visualize each iteration by drawing on vis
         cv2.line(vis, old, new, (255, 255, 255), 2)
         cv2.imshow('Progress', vis)
-        cv2.waitKey(50)  # 20 fps, tune according to your liking
+        cv2.waitKey(5)  # 20 fps, tune according to your liking
