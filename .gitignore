@@ -150,3 +150,5 @@ cifar-10-batches-py/
 .vscode/
 assignment1/results.csv
 archive/cifar-10-python.tar.gz
+*.fdb_latexmk
+*.fls
