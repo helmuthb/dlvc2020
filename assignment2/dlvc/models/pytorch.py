@@ -5,53 +5,66 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+
 class CnnClassifier(Model):
     '''
     Wrapper around a PyTorch CNN for classification.
-    The network must expect inputs of shape NCHW with N being a variable batch size,
-    C being the number of (image) channels, H being the (image) height, and W being the (image) width.
-    The network must end with a linear layer with num_classes units (no softmax).
-    The cross-entropy loss (torch.nn.CrossEntropyLoss) and SGD (torch.optim.SGD) are used for training.
+    The network must expect inputs of shape NCHW with N being a variable
+    batch size, C being the number of (image) channels, H being the (image)
+    height, and W being the (image) width.
+    The network must end with a linear layer with num_classes units
+    (no softmax).
+    The cross-entropy loss (torch.nn.CrossEntropyLoss) and SGD
+    (torch.optim.SGD) are used for training.
     '''
 
-    def __init__(self, net: nn.Module, input_shape: tuple, num_classes: int, lr: float, wd: float):
+    def __init__(self, net: nn.Module, input_shape: tuple,
+                 num_classes: int, lr: float, wd: float):
         '''
         Ctor.
         net is the cnn to wrap. see above comments for requirements.
         input_shape is the expected input shape, i.e. (0,C,H,W).
         num_classes is the number of classes (> 0).
-        lr: learning rate to use for training (SGD with e.g. Nesterov momentum of 0.9).
+        lr: learning rate to use for training (SGD with e.g. Nesterov momentum
+        of 0.9).
         wd: weight decay to use for training.
         '''
 
-        self.input_shape = input_shape
-        self.num_classes = num_classes
-        self.loss_fn = nn.CrossEntropyLoss()
-        self.softmax = nn.Softmax(dim=1)
-        self.net = net
-        self.optimizer = torch.optim.SGD(net.parameters(), lr=lr, weight_decay=wd, momentum=0.9, nesterov=True)
+        self._input_shape = input_shape
+        self._num_classes = num_classes
+        self._loss_fn = nn.CrossEntropyLoss()
+        self._softmax = nn.Softmax(dim=1)
+        self._net = net
+        self._optimizer = torch.optim.SGD(
+            net.parameters(),
+            lr=lr,
+            weight_decay=wd,
+            momentum=0.9,
+            nesterov=True)
         first_parameter = next(net.parameters())
-        self.is_cuda = first_parameter.is_cuda
+        self._is_cuda = first_parameter.is_cuda
 
     def input_shape(self) -> tuple:
         '''
         Returns the expected input shape as a tuple.
         '''
 
-        return self.input_shape
+        return self._input_shape
 
     def output_shape(self) -> tuple:
         '''
-        Returns the shape of predictions for a single sample as a tuple, which is (num_classes,).
+        Returns the shape of predictions for a single sample as a tuple,
+        which is (num_classes,).
         '''
 
-        return (self.num_classses,)
+        return (self._num_classes,)
 
     def train(self, data: np.ndarray, labels: np.ndarray) -> float:
         '''
         Train the model on batch of data.
-        Data has shape (m,C,H,W) and type np.float32 (m is arbitrary).
-        Labels has shape (m,) and integral values between 0 and num_classes - 1.
+        Data has shape (m,C,H,W) and type np.float32 (m arbitrary).
+        Labels has shape (m,) and integral values between 0 and
+        num_classes - 1.
         Returns the training loss.
         Raises TypeError on invalid argument types.
         Raises ValueError on invalid argument values.
@@ -68,37 +81,45 @@ class CnnClassifier(Model):
         if len(data.shape) != 4:
             raise ValueError('The input `data` must be a 4-dimensional tensor')
         if len(labels.shape) != 1:
-            raise ValueError('The input `labels` must be a 1-dimensional array')
+            raise ValueError(
+                'The input `labels` must be a 1-dimensional array')
         if data.shape[0] != labels.shape[0]:
-            raise ValueError('Arrays `labels` and `data` must have the same number of rows')
-        if data.shape[1:] != self.input_shape[1:]:
-            raise ValueError('The input `data` must be of shape {self.input_shape} (except the first dimension)')
+            raise ValueError(
+                'Arrays `labels` and `data` must have the same number of rows')
+        if data.shape[1:] != self._input_shape[1:]:
+            raise ValueError(
+                f'The input `data` must be of shape {self._input_shape}'
+                ' (except the first dimension)')
         # 3. data values must be of type np.float32
         if data.dtype != np.float32:
-            raise TypeError('The input `data` must be a numpy array of float32 values')
+            raise TypeError(
+                'The input `data` must be a numpy array of float32 values')
         # 4. labels must be integer
         if labels.dtype.kind != 'i':
-            raise TypeError('The input `labels` must be a numpy array of integer values')
+            raise TypeError(
+                'The input `labels` must be a numpy array of integer values')
         # 5. labels must be in the range [0, num_classes-1]
-        if np.min(labels) < 0 or np.max(labels) >= self.num_classes:
-            raise ValueError(f'The input `labels` must be between 0 and {num_classes-1}')
+        if np.min(labels) < 0 or np.max(labels) >= self._num_classes:
+            raise ValueError(
+                'The input `labels` must be between 0 '
+                f'and {self._num_classes-1}')
         # all other errors will (hopefully) raise a RuntimeError
 
         # set training mode on the network
-        self.net.train(True)
+        self._net.train(True)
         # create PyTorch tensors from the data
         pt_data = torch.from_numpy(data)
         pt_labels = torch.from_numpy(labels)
         # copy to GPU if required
-        if self.is_cuda:
+        if self._is_cuda:
             pt_data = pt_data.cuda()
             pt_labels = pt_labels.cuda()
         # reset gradients
-        self.optimizer.zero_grad()
-        outputs = self.net(pt_data)
-        loss = self.loss_fn(outputs, pt_labels)
+        self._optimizer.zero_grad()
+        outputs = self._net(pt_data)
+        loss = self._loss_fn(outputs, pt_labels)
         loss.backward()
-        self.optimizer.step()
+        self._optimizer.step()
         # training loss: in loss
         return loss.item()
 
@@ -119,16 +140,18 @@ class CnnClassifier(Model):
         # 2. input must be of the correct shape
         if len(data.shape) != 4:
             raise ValueError('The input `data` must be a 4-dimensional tensor')
-        if data.shape[1:] != self.input_shape[1:]:
-            raise ValueError('The input `data` must be of shape {self.input_shape} (except the first dimension)')
+        if data.shape[1:] != self._input_shape[1:]:
+            raise ValueError(
+                f'The input `data` must be of shape {self._input_shape}'
+                ' (except the first dimension)')
         # all other errors will (hopefully) raise a RuntimeError
         # Calculate target (prediction) via model
-        self.net.eval()
+        self._net.eval()
         # create PyTorch tensors from the data
         pt_data = torch.from_numpy(data)
         # copy to GPU if required
-        if self.is_cuda:
+        if self._is_cuda:
             pt_data = pt_data.cuda()
-        pred = self.net(pt_data).detach()
+        pred = self._net(pt_data).detach()
         # always calling cpu() (it does not cost more than an if would)
-        return self.softmax(pred).cpu().numpy()
+        return self._softmax(pred).cpu().numpy()

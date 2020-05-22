@@ -35,6 +35,7 @@ BATCH_SIZE = 512
 train_batches = BatchGenerator(train_data, BATCH_SIZE, True, op)
 val_batches = BatchGenerator(val_data, BATCH_SIZE, True, op)
 
+
 # Step 3: Define PyTorch CNN
 class CatsDogsModel(nn.Module):
     def __init__(self):
@@ -106,6 +107,7 @@ class CatsDogsModel(nn.Module):
         x = self.linear(x)
         return x
 
+
 def train_model(lr: float, wd: float) -> TrainedModel:
     '''
     Trains a CNN classifier with a given learning rate (lr) and weight decay.
@@ -131,6 +133,7 @@ def train_model(lr: float, wd: float) -> TrainedModel:
         accuracy.update(prediction, batch.label)
 
     return TrainedModel(clf, accuracy)
+
 
 # Step 4: random search for good parameter values
 best_model = TrainedModel(None, Accuracy()) # accuracy 0
