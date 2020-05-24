@@ -1,10 +1,13 @@
 import numpy as np
+import random
 
 from typing import List, Callable
 
 # All operations are functions that take and return numpy arrays
-# See https://docs.python.org/3/library/typing.html#typing.Callable for what this line means
+# See https://docs.python.org/3/library/typing.html#typing.Callable for
+# what this line means
 Op = Callable[[np.ndarray], np.ndarray]
+
 
 def chain(ops: List[Op]) -> Op:
     '''
@@ -18,6 +21,7 @@ def chain(ops: List[Op]) -> Op:
 
     return op
 
+
 def type_cast(dtype: np.dtype) -> Op:
     '''
     Cast numpy arrays to the given type.
@@ -27,6 +31,7 @@ def type_cast(dtype: np.dtype) -> Op:
         return sample.astype(dtype)
 
     return op
+
 
 def vectorize() -> Op:
     '''
@@ -38,6 +43,7 @@ def vectorize() -> Op:
     
     return op
 
+
 def add(val: float) -> Op:
     '''
     Add a scalar value to all array elements.
@@ -47,6 +53,7 @@ def add(val: float) -> Op:
         return sample + val
     
     return op
+
 
 def mul(val: float) -> Op:
     '''
@@ -68,6 +75,7 @@ def hwc2chw() -> Op:
     
     return op
 
+
 def chw2hwc() -> Op:
     '''
     Flip a 3D array with shape CHW to HWC.
@@ -78,21 +86,28 @@ def chw2hwc() -> Op:
     
     return op
 
+
 def hflip() -> Op:
     '''
     Flip arrays with shape HWC horizontally with a probability of 0.5.
     '''
 
     def op(sample: np.ndarray) -> np.ndarray:
-        return np.flip(sample, 0)
+        if random.choice([True, False]):
+            return np.flip(sample, 0)
+        else:
+            return sample
 
     return op
+
 
 def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
     '''
     Extract a square random crop of size sz from arrays with shape HWC.
-    If pad is > 0, the array is first padded by pad pixels along the top, left, bottom, and right.
-    How padding is done is governed by pad_mode, which should work exactly as the 'mode' argument of numpy.pad.
+    If pad is > 0, the array is first padded by pad pixels along the
+    top, left, bottom, and right.
+    How padding is done is governed by pad_mode, which should work
+    exactly as the 'mode' argument of numpy.pad.
     Raises ValueError if sz exceeds the array width/height after padding.
     '''
 
@@ -100,6 +115,7 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
         if pad > 0:
             sample = np.pad(sample, [pad, pad, 0], pad_mode)
         if sz > sample.shape[0] or sz > sample.shape[1]:
-            raise ValueError(f"Sample too small ({sample.shape}) for cropping size {sz}")
+            raise ValueError(
+                f"Sample too small ({sample.shape}) for cropping size {sz}")
 
     return op
