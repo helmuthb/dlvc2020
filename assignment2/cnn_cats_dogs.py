@@ -152,9 +152,9 @@ class CatsDogsModelSimple(nn.Module):
 
 
 # Learning rate to use
-lr = 0.1
+lr = 0.001
 # weight decay to use
-wd = 0.001
+wd = 0.0
 # Step 4: wrap into CnnClassifier
 net = CatsDogsModel()
 # check whether GPU support is available
