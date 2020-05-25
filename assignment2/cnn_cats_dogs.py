@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import TextIO
 
 from dlvc.models.pytorch import CnnClassifier
 from dlvc.test import Accuracy
@@ -17,6 +18,8 @@ TrainedModel = namedtuple('TrainedModel', ['model', 'accuracy'])
 random.seed(42)
 np.random.seed(42)
 torch.manual_seed(42)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 # Batch size to be used
 BATCH_SIZE = 128
@@ -63,7 +66,7 @@ val_batches = BatchGenerator(val_data, BATCH_SIZE, True, op2)
 class CatsDogsModel(nn.Module):
     def __init__(self):
         super(CatsDogsModel, self).__init__()
-        # Our network (one layer after the other in a list)
+        # Our network
         self.layers = nn.Sequential(
             # we start with a 7x7 kernel, padding 3, stride=2
             # creating 64 feature maps
@@ -118,21 +121,69 @@ class CatsDogsModel(nn.Module):
         return self.layers.forward(x)
 
 
-def train_model(lr: float, wd: float) -> TrainedModel:
+class CatsDogsModelSimple(nn.Module):
+    def __init__(self):
+        super(CatsDogsModelSimple, self).__init__()
+        # Our network - simplified (no block)
+        self.layers = nn.Sequential(
+            # we start with a 7x7 kernel, padding 3, stride=2
+            # creating 64 feature maps
+            # (m, 3, 32, 32) -> (m, 64, 16, 16)
+            nn.Conv2d(3, 64, kernel_size=7, padding=3, stride=2),
+            # ReLU as activation
+            nn.ReLU(inplace=True),
+            # and MaxPooling for dimension reduction
+            # (m, 64, 16, 16) -> (m, 64, 8, 8)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # Average pool
+            # (m, 64, 8, 8) -> (m, 64, 1, 1)
+            nn.AvgPool2d(kernel_size=8),
+            # Flatten
+            # (m, 64, 1, 1) -> (m, 64)
+            nn.Flatten(),
+            # Linear layer for 2 classes
+            # (m, 64) -> (m, 2)
+            nn.Linear(64, 2)
+        )
+
+    def forward(self, x):
+        # run the steps ...
+        return self.layers.forward(x)
+
+
+# Learning rate to use
+lr = 0.1
+# weight decay to use
+wd = 0.001
+# Step 4: wrap into CnnClassifier
+net = CatsDogsModel()
+# check whether GPU support is available
+if torch.cuda.is_available():
+    net.cuda()
+clf = CnnClassifier(net, (0, 3, 32, 32), train_data.num_classes(), lr, wd)
+
+netSimple = CatsDogsModelSimple()
+# check whether GPU support is available
+if torch.cuda.is_available():
+    net.cuda()
+clfSimple = CnnClassifier(
+    net,
+    (0, 3, 32, 32),
+    train_data.num_classes(),
+    lr,
+    wd
+)
+
+
+# Step 5: train in 100 epochs
+def train_model(clf: CnnClassifier, results_file: TextIO) -> TrainedModel:
     '''
-    Trains a CNN classifier with a given learning rate (lr) and weight decay.
+    Trains a CNN classifier.
     Computes the accuracy on the validation set.
     Returns both the trained classifier and accuracy.
     '''
 
-    # Step 4: wrap into CnnClassifier
-    net = CatsDogsModel()
-    # check whether GPU support is available
-    if torch.cuda.is_available():
-        net.cuda()
-    clf = CnnClassifier(net, (0, 3, 32, 32), train_data.num_classes(), lr, wd)
-
-    # Step 5: train in 100 epochs
+    results_file.write('epoch,train_loss,train_loss_sd,val_accuracy\n')
     n_epochs = 100
     for i in range(n_epochs):
         print(f"epoch {i+1}")
@@ -153,8 +204,16 @@ def train_model(lr: float, wd: float) -> TrainedModel:
             prediction = clf.predict(batch.data)
             accuracy.update(prediction, batch.label)
         print(f" val acc: {accuracy}")
+        results_file.write(f"{i},{np.mean(loss_train)},")
+        results_file.write(f"{np.std(loss_train)},{accuracy.accuracy()}\n")
 
     return TrainedModel(clf, accuracy)
 
 
-model = train_model(0.1, 0.001)
+with open('results1.csv', 'wt') as results_file:
+    model = train_model(clf, results_file)
+with open('results2.csv', 'wt') as results_file:
+    modelSimple = train_model(clfSimple, results_file)
+
+print(f"Model: {model.accuracy}")
+print(f"Simple Model: {modelSimple.accuracy}")
