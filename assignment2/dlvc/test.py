@@ -118,7 +118,7 @@ class Accuracy(PerformanceMeasure):
         '''
         Return a string representation of the performance.
         '''
-        return f"accuracy: {self.accuracy()}"
+        return f"accuracy: {self.accuracy():.3}"
         # return something like "accuracy: 0.395"
 
     def __lt__(self, other) -> bool:

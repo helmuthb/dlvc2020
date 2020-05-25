@@ -18,22 +18,45 @@ random.seed(42)
 np.random.seed(42)
 torch.manual_seed(42)
 
+# Batch size to be used
+BATCH_SIZE = 128
+
 # Step 1: load the data sets (TRAIN, VALIDATION)
 train_data = PetsDataset("../cifar-10-batches-py", Subset.TRAINING)
 val_data = PetsDataset("../cifar-10-batches-py", Subset.VALIDATION)
 
 # Operations to standardize
-# TODO: perform experiments, e.g. scaling according to test data
-op = ops.chain([
+# First experiment: scale to [-1,1]
+op1 = ops.chain([
     ops.type_cast(np.float32),
     ops.add(-127.5),
     ops.mul(1/127.5),
     ops.hwc2chw()
 ])
+# Second experiment: scale to sample mean=0, sd=1
+# calculate average training sample mean & sd
+op_calc = ops.chain([
+    ops.type_cast(np.float32),
+    ops.mean_sd()
+])
+# using batch generator (could do it directly but I'm lazy)
+train_full_batch_gen = BatchGenerator(
+    train_data,
+    len(train_data),
+    False,
+    op_calc)
+train_full_batch = next(b for b in train_full_batch_gen)
+train_mean_sd = np.mean(train_full_batch.data, axis=0)
+# create operation to scale
+op2 = ops.chain([
+    ops.type_cast(np.float32),
+    ops.scale(train_mean_sd[0], train_mean_sd[1]),
+    ops.hwc2chw()
+])
+
 # Step 2: Create batch generator for each
-BATCH_SIZE = 512
-train_batches = BatchGenerator(train_data, BATCH_SIZE, True, op)
-val_batches = BatchGenerator(val_data, BATCH_SIZE, True, op)
+train_batches = BatchGenerator(train_data, BATCH_SIZE, True, op2)
+val_batches = BatchGenerator(val_data, BATCH_SIZE, True, op2)
 
 
 # Step 3: Define PyTorch CNN
@@ -102,51 +125,36 @@ def train_model(lr: float, wd: float) -> TrainedModel:
     Returns both the trained classifier and accuracy.
     '''
 
-    # Step 3: train CNN classifier, 100 epochs
+    # Step 4: wrap into CnnClassifier
     net = CatsDogsModel()
     # check whether GPU support is available
     if torch.cuda.is_available():
         net.cuda()
     clf = CnnClassifier(net, (0, 3, 32, 32), train_data.num_classes(), lr, wd)
 
+    # Step 5: train in 100 epochs
     n_epochs = 100
     for i in range(n_epochs):
+        print(f"epoch {i+1}")
+        # reset list of per-epoch training loss
+        loss_train = []
         for batch in train_batches:
             # train classifier
-            clf.train(batch.data, batch.label)
+            loss_train.append(clf.train(batch.data, batch.label))
+        # output as requested
+        loss_train = np.array(loss_train)
+        print(f" train loss: {np.mean(loss_train):5.3f} +- "
+              f"{np.std(loss_train):5.3f}")
 
-    accuracy = Accuracy()
-    for batch in val_batches:
-        # predict and update accuracy
-        prediction = clf.predict(batch.data)
-        accuracy.update(prediction, batch.label)
+        # calculate validation accuracy
+        accuracy = Accuracy()
+        for batch in val_batches:
+            # predict and update accuracy
+            prediction = clf.predict(batch.data)
+            accuracy.update(prediction, batch.label)
+        print(f" val acc: {accuracy}")
 
     return TrainedModel(clf, accuracy)
 
 
-# Step 4: random search for good parameter values
-best_model = TrainedModel(None, Accuracy())  # accuracy 0
-best_lr = -1
-best_wd = -1
-NUM_ATTEMPTS = 1000
-# output file: CSV of lr, wd, accuracy
-# this is then used for plotting
-f = open('results.csv', 'w')
-for i in range(NUM_ATTEMPTS):
-    # try random lr in the range of 0 to 1 and wd in the range 0 to 0.1
-    lr = random.random()
-    wd = random.random() / 10.
-    # train model
-    model = train_model(lr, wd)
-    # output hyperparameters & validation accuracy
-    f.write(f"{lr},{wd},{model.accuracy.accuracy()}\n")
-    # did we improve the accuracy?
-    if model.accuracy > best_model.accuracy:
-        best_model = model
-        best_lr = lr
-        best_wd = wd
-# close output file
-f.close()
-print(f"""Validation: {best_model.accuracy}
-Parameters: wd={best_wd}
-            lr={best_lr}""")
+model = train_model(0.1, 0.001)

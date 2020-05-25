@@ -40,7 +40,7 @@ def vectorize() -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:
         return np.ravel(sample)
-    
+
     return op
 
 
@@ -51,7 +51,7 @@ def add(val: float) -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:
         return sample + val
-    
+
     return op
 
 
@@ -62,8 +62,31 @@ def mul(val: float) -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:
         return sample * val
-    
+
     return op
+
+
+def mean_sd() -> Op:
+    '''
+    Calculate sample mean and standard deviation
+    '''
+
+    def op(sample: np.ndarray) -> np.ndarray:
+        return np.array([np.mean(sample), np.std(sample)])
+
+    return op
+
+
+def scale(mean: float, sd: float) -> Op:
+    '''
+    Scale the data to training mean & training std
+    '''
+
+    def op(sample: np.ndarray) -> np.ndarray:
+        return (sample - mean) / sd
+
+    return op
+
 
 def hwc2chw() -> Op:
     '''
@@ -72,7 +95,7 @@ def hwc2chw() -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:
         return np.transpose(sample, (2, 0, 1))
-    
+
     return op
 
 
@@ -83,7 +106,7 @@ def chw2hwc() -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:
         return np.transpose(sample, (1, 2, 0))
-    
+
     return op
 
 
