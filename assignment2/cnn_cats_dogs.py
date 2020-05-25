@@ -151,8 +151,77 @@ class CatsDogsModelSimple(nn.Module):
         return self.layers.forward(x)
 
 
+class CatsDogsModelComplex(nn.Module):
+    def __init__(self):
+        super(CatsDogsModelComplex, self).__init__()
+        # Our network - even more layers
+        self.layers = nn.Sequential(
+            # we start with a 7x7 kernel, padding 3, stride=2
+            # creating 64 feature maps
+            # (m, 3, 32, 32) -> (m, 64, 16, 16)
+            nn.Conv2d(3, 64, kernel_size=7, padding=3, stride=2),
+            # ReLU as activation
+            nn.ReLU(inplace=True),
+            # and MaxPooling for dimension reduction
+            # (m, 64, 16, 16) -> (m, 64, 8, 8)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes a "block" - blowing up the features
+            # Step 1: Conv2D
+            # (m, 64, 8, 8) -> (m, 128, 8, 8)
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 2: another Conv2D
+            # (m, 128, 8, 8) -> (m, 128, 8, 8)
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 128, 8, 8) -> (m, 128, 4, 4)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes another "block" - blowing up the features
+            # Step 1: Conv2D
+            # (m, 128, 4, 4) -> (m, 256, 4, 4)
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 2: another Conv2D
+            # (m, 256, 4, 4) -> (m, 256, 4, 4)
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 256, 4, 4) -> (m, 256, 2, 2)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes a third "block"
+            # Step 1: Conv2D
+            # (m, 256, 2, 2) -> (m, 512, 2, 2)
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 2: another Conv2D
+            # (m, 512, 2, 2) -> (m, 512, 2, 2)
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 512, 2, 2) -> (m, 512, 1, 1)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # Flatten
+            # (m, 512, 1, 1) -> (m, 512)
+            nn.Flatten(),
+            # Linear layer for 2 classes
+            # (m, 512) -> (m, 2)
+            nn.Linear(512, 2)
+        )
+
+    def forward(self, x):
+        # run the steps ...
+        return self.layers.forward(x)
+
+
 # Learning rate to use
-lr = 0.001
+lr = 0.0001
 # weight decay to use
 wd = 0.0
 # Step 4: wrap into CnnClassifier
@@ -165,9 +234,21 @@ clf = CnnClassifier(net, (0, 3, 32, 32), train_data.num_classes(), lr, wd)
 netSimple = CatsDogsModelSimple()
 # check whether GPU support is available
 if torch.cuda.is_available():
-    net.cuda()
+    netSimple.cuda()
 clfSimple = CnnClassifier(
-    net,
+    netSimple,
+    (0, 3, 32, 32),
+    train_data.num_classes(),
+    lr,
+    wd
+)
+
+netComplex = CatsDogsModelComplex()
+# check whether GPU support is available
+if torch.cuda.is_available():
+    netComplex.cuda()
+clfComplex = CnnClassifier(
+    netComplex,
     (0, 3, 32, 32),
     train_data.num_classes(),
     lr,
@@ -210,10 +291,13 @@ def train_model(clf: CnnClassifier, results_file: TextIO) -> TrainedModel:
     return TrainedModel(clf, accuracy)
 
 
-with open('results1.csv', 'wt') as results_file:
+with open(f'results_{lr}.csv', 'wt') as results_file:
     model = train_model(clf, results_file)
-with open('results2.csv', 'wt') as results_file:
+with open(f'results_simple_{lr}.csv', 'wt') as results_file:
     modelSimple = train_model(clfSimple, results_file)
+with open(f'results_complex_{lr}.csv', 'wt') as results_file:
+    modelComplex = train_model(clfComplex, results_file)
 
 print(f"Model: {model.accuracy}")
 print(f"Simple Model: {modelSimple.accuracy}")
+print(f"Complex Model: {modelComplex.accuracy}")
