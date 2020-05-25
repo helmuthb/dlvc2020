@@ -68,8 +68,8 @@ class Fn:
         '''
 
         fn = self.fn
-        max_x1 = fn.shape[0]-1
-        max_x2 = fn.shape[1]-1
+        max_x1 = fn.shape[1]-1
+        max_x2 = fn.shape[0]-1
         if loc.x1 < 0 or loc.x1 > max_x1 or loc.x2 < 0 or loc.x2 > max_x1:
             raise ValueError("Location is out of bounds")
         # using bilinear interpolation
@@ -78,15 +78,15 @@ class Fn:
         i2 = math.floor(loc.x2)
         x1 = loc.x1 - i1
         x2 = loc.x2 - i2
-        f00 = fn[i1, i2]
-        f10 = fn[i1+1, i2] if i1 < max_x1 else f00
-        f01 = fn[i1, i2+1] if i2 < max_x2 else f00
+        f00 = fn[i2, i1]
+        f10 = fn[i2+1, i1] if i1 < max_x1 else f00
+        f01 = fn[i2, i1+1] if i2 < max_x2 else f00
         if i1 == max_x1:
             f11 = f01
         elif i2 == max_x2:
             f11 = f10
         else:
-            f11 = fn[i1+1, i2+1]
+            f11 = fn[i2+1, i1+1]
         return f00*(1-x1)*(1-x2) + f10*x1*(1-x2) + f01*(1-x1)*x2 + f11*x1*x2
 
     def grad(self, loc: Vec2) -> Vec2:
@@ -154,8 +154,21 @@ if __name__ == '__main__':
                         help='Learning rate')
     parser.add_argument('--beta', type=float, default=0,
                         help='Beta parameter of momentum (0 = no momentum)')
+    parser.add_argument('--beta2', type=float, default=0.999,
+                        help='Second Beta parameter (for Adam/AdamW only)')
     parser.add_argument('--nesterov', action='store_true',
-                        help='Use Nesterov momentum')
+                        help='Use Nesterov momentum (for SGD only)')
+    parser.add_argument('--amsgrad', action='store_true',
+                        help='Use AMSGrad variant (for Adam/AdamW only)')
+    optimizer = parser.add_mutually_exclusive_group()
+    optimizer.add_argument('--sgd', action='store_true',
+                           help='Use SGD optimizer (default)')
+    optimizer.add_argument('--adam', action='store_true',
+                           help='Use Adam optimizer')
+    optimizer.add_argument('--adamw', action='store_true',
+                           help='Use AdamW optimizer')
+    parser.add_argument('--out', type=str, default=None,
+                        help='Path to file where final image is saved to')
     args = parser.parse_args()
 
     # Init
@@ -166,20 +179,42 @@ if __name__ == '__main__':
     best_n = []
     # breakpoint n: when the value is no longer in the top-n
     n = 20
-    # optimizer = torch.optim.SGD(
-    #     [loc],
-    #     lr=args.learning_rate,
-    #     momentum=args.beta,
-    #     nesterov=args.nesterov)
-    optimizer = torch.optim.AdamW(
-        [loc],
-        lr=args.learning_rate,
-        eps=args.eps,
-        weight_decay=0)
+    # create optimizer
+    if args.adam:
+        optimizer = torch.optim.Adam(
+            [loc],
+            lr=args.learning_rate,
+            betas=(args.beta, args.beta2),
+            weight_decay=0,
+            amsgrad=args.amsgrad
+        )
+    elif args.adamw:
+        optimizer = torch.optim.AdamW(
+            [loc],
+            lr=args.learning_rate,
+            betas=(args.beta, args.beta2),
+            weight_decay=0,
+            amsgrad=args.amsgrad
+        )
+    else:
+        optimizer = torch.optim.SGD(
+            [loc],
+            lr=args.learning_rate,
+            momentum=args.beta,
+            nesterov=args.nesterov
+        )
 
     # Perform gradient descent using a PyTorch optimizer
     # See https://pytorch.org/docs/stable/optim.html for how to use it
+    step = 0
+    color1 = (255, 255, 255)
+    color2 = (128, 128, 128)
+    startPos = (int(loc[0].item()), int(loc[1].item()))
+    cv2.drawMarker(vis, startPos, (0, 0, 255),
+                   markerType=cv2.MARKER_TILTED_CROSS)
     while True:
+        step += 1
+        color = color1 if int(step/10) % 2 == 0 else color2
         old = (int(loc[0].item()), int(loc[1].item()))
         optimizer.zero_grad()
         value = AutogradFn.apply(fn, loc)
@@ -188,14 +223,17 @@ if __name__ == '__main__':
             worst = heapq.heappushpop(best_n, -value)
             if (-value) == worst:
                 # break the loop
-                exit(0)
+                break
         else:
             heapq.heappush(best_n, -value)
         value.backward()
         optimizer.step()
-        print(loc[0].item(), loc[1].item())
         new = (int(loc[0].item()), int(loc[1].item()))
         # Visualize each iteration by drawing on vis
-        cv2.line(vis, old, new, (255, 255, 255), 2)
+        cv2.line(vis, old, new, color, 1)
         cv2.imshow('Progress', vis)
-        cv2.waitKey(5)  # 20 fps, tune according to your liking
+        cv2.waitKey(50)  # 20 fps, tune according to your liking
+    cv2.drawMarker(vis, new, (0, 255, 0),
+                   markerType=cv2.MARKER_TILTED_CROSS)
+    if (args.out):
+        cv2.imwrite(args.out, vis)
