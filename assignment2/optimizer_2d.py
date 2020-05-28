@@ -160,6 +160,8 @@ if __name__ == '__main__':
                         help='Use Nesterov momentum (for SGD only)')
     parser.add_argument('--amsgrad', action='store_true',
                         help='Use AMSGrad variant (for Adam/AdamW only)')
+    parser.add_argument('--weight_decay', type=float, default=0.0,
+                        help='Weight decay (0 = no decay)')
     optimizer = parser.add_mutually_exclusive_group()
     optimizer.add_argument('--sgd', action='store_true',
                            help='Use SGD optimizer (default)')
@@ -185,7 +187,7 @@ if __name__ == '__main__':
             [loc],
             lr=args.learning_rate,
             betas=(args.beta, args.beta2),
-            weight_decay=0,
+            weight_decay=args.weight_decay,
             amsgrad=args.amsgrad
         )
     elif args.adamw:
@@ -193,7 +195,7 @@ if __name__ == '__main__':
             [loc],
             lr=args.learning_rate,
             betas=(args.beta, args.beta2),
-            weight_decay=0,
+            weight_decay=args.weight_decay,
             amsgrad=args.amsgrad
         )
     else:
@@ -201,7 +203,8 @@ if __name__ == '__main__':
             [loc],
             lr=args.learning_rate,
             momentum=args.beta,
-            nesterov=args.nesterov
+            nesterov=args.nesterov,
+            weight_decay=args.weight_decay
         )
 
     # Perform gradient descent using a PyTorch optimizer

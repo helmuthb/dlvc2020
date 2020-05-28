@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 import random
 
 from typing import List, Callable
@@ -136,9 +137,85 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
 
     def op(sample: np.ndarray) -> np.ndarray:
         if pad > 0:
-            sample = np.pad(sample, [pad, pad, 0], pad_mode)
+            sample = np.pad(sample, ((pad, pad), (pad, pad), (0, 0)), pad_mode)
         if sz > sample.shape[0] or sz > sample.shape[1]:
             raise ValueError(
                 f"Sample too small ({sample.shape}) for cropping size {sz}")
+        # get starting position in both dimensions
+        x1 = random.randint(0, sample.shape[0]-sz)
+        x1_end = x1 + sz
+        x2 = random.randint(0, sample.shape[1]-sz)
+        x2_end = x2 + sz
+        # return cropped region
+        return sample[x1:x1_end, x2:x2_end, :]
+
+    return op
+
+
+def zoom(sz: int, scale: float) -> Op:
+    '''
+    With a probability of 66%, zoom into or out of
+    an image by a given factor.
+    It expects images in HWC with the specified size.
+    '''
+    mat1 = cv2.getRotationMatrix2D((sz, sz), 0., scale)
+    mat2 = cv2.getRotationMatrix2D((sz, sz), 0., 1./scale)
+
+    def op(sample: np.ndarray) -> np.ndarray:
+        choice = random.choice([0, 1, 2])
+        if choice == 1:
+            return cv2.warpAffine(sample, mat1, (sz, sz))
+        elif choice == 2:
+            return cv2.warpAffine(sample, mat2, (sz, sz))
+        else:
+            return sample
+
+    return op
+
+
+def rotate(sz: int, angle: float) -> Op:
+    '''
+    With a probability of 66%, rotate an image by
+    a given angle - left or right.
+    It expects images in HWC with the specified size.
+    '''
+    mat1 = cv2.getRotationMatrix2D((sz, sz), angle, 1)
+    mat2 = cv2.getRotationMatrix2D((sz, sz), -angle, 1.)
+
+    def op(sample: np.ndarray) -> np.ndarray:
+        choice = random.choice([0, 1, 2])
+        if choice == 1:
+            return cv2.warpAffine(sample, mat1, (sz, sz))
+        elif choice == 2:
+            return cv2.warpAffine(sample, mat2, (sz, sz))
+        else:
+            return sample
+
+    return op
+
+
+def noise(sigma: float) -> Op:
+    '''
+    Add random noise, from a normal distribution
+    with center 0 and variance sigma^2.
+    '''
+
+    def op(sample: np.ndarray) -> np.ndarray:
+        shape = sample.shape
+        noise = np.random.normal(loc=0., scale=sigma, size=shape)
+        return sample + noise.reshape(shape).astype(sample.dtype)
+
+    return op
+
+
+def random_factor(sigma: float) -> Op:
+    '''
+    Multiply each sample with a random factor,
+    drawn from a normal distribution with
+    center 1 and variance sigma^2.
+    '''
+
+    def op(sample: np.ndarray) -> np.ndarray:
+        return sample * random.normalvariate(1., sigma)
 
     return op
