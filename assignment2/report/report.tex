@@ -50,14 +50,21 @@ Most important for gradient descent are local minima, and most often the solutio
 returned by gradient descent is a local minimum.
 
 \begin{figure}[h]
-  \begin{subfigure}[c]{0.45\columnwidth}
+  \begin{subfigure}[c]{0.3\columnwidth}
     \includegraphics[width=\textwidth]{local-minimum.png}
     \subcaption{Local minima}
   \end{subfigure}
-  \begin{subfigure}[c]{0.45\columnwidth}
+  \hspace{1pt}
+  \begin{subfigure}[c]{0.3\columnwidth}
     \includegraphics[width=\textwidth]{oscillation.png}
     \subcaption{Oscillation}
   \end{subfigure}
+  \hspace{2pt}
+  \begin{subfigure}[c]{0.3\columnwidth}
+    \includegraphics[width=\textwidth]{divergence.png}
+    \subcaption{Divergence}
+  \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Problems with gradient descent}
 \label{p1:problems}
 \end{figure}
@@ -72,6 +79,9 @@ is then making larger steps towards the solution.
 Sometimes, however, larger learning rates can influence the convergence negatively:
 the method sometimes is oscillating around the final solution before converging.
 This can be seen in figure \ref{p1:problems}(b).
+And an even higher learning rate might cause divergence of the solution,
+where the parameters leave the range of valid values.
+An example for this is displayed in figure \ref{p1:problems}(c).
 
 Starting from the simple gradient descent architecture there
 are more refined optimizers.
@@ -87,10 +97,12 @@ be seen in figure \ref{p1:momentum}.
 \includegraphics[width=\textwidth]{sgd-camel-nomomentum.png}
 \subcaption{Without momentum}
 \end{subfigure}
+\hspace{2pt}
 \begin{subfigure}[c]{0.45\columnwidth}
 \includegraphics[width=\textwidth]{sgd-camel-momentum.png}
 \subcaption{With momentum}
 \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Influence of momentum}
 \label{p1:momentum}
 \end{figure}
@@ -105,10 +117,12 @@ regular gradient descent, both with and without momentum.
 \includegraphics[width=\textwidth]{sgd-camel-nomomentum.png}
 \subcaption{Gradient descent}
 \end{subfigure}
+\hspace{2pt}
 \begin{subfigure}[c]{0.45\columnwidth}
 \includegraphics[width=\textwidth]{adam-camel.png}
 \subcaption{Adam}
 \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Adam vs. gradient descent}
 \label{p1:momentum}
 \end{figure}
@@ -121,10 +135,10 @@ The first one, our baseline network, was
 based on the suggested network from the slides.
 
 \begin{figure}[ht]
-  \begin{subfigure}[c]{0.3\columnwidth}
+  \begin{subfigure}[t]{0.3\columnwidth}
     \scriptsize
     \begin{tabular}{l}
-      Layer \\
+      Layers \\
       \hline
       Conv2d(64,k=7,p=3,s=2) \\
       ReLU  \\
@@ -141,28 +155,46 @@ based on the suggested network from the slides.
       MaxPool2d(k=2,s=2) \\
       AvgPool2d(k=2) \\
       Flatten \\
-      Linear(2) 
+      Linear(2) \\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
     \end{tabular}
     \subcaption{Baseline model}
   \end{subfigure}
-  \begin{subfigure}[c]{0.3\columnwidth}
+  \begin{subfigure}[t]{0.3\columnwidth}
     \scriptsize
     \begin{tabular}{l}
-      Layer \\
+      Layers \\
       \hline
       Conv2d(64,k=7,p=3,s=2) \\
       ReLU  \\
       MaxPool2d(k=2,s=2) \\
       AvgPool2d(k=2) \\
       Flatten \\
-      Linear(2) 
+      Linear(2) \\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
+      ~\\
     \end{tabular}
     \subcaption{Simple model}
   \end{subfigure}
-  \begin{subfigure}[c]{0.3\columnwidth}
+  \begin{subfigure}[t]{0.3\columnwidth}
     \scriptsize
     \begin{tabular}{l}
-      Layer \\
+      Layers \\
       \hline
       Conv2d(64,k=7,p=3,s=2) \\
       ReLU  \\
@@ -188,6 +220,7 @@ based on the suggested network from the slides.
     \subcaption{Complex model}
   \end{subfigure}
   \label{part2:networks}
+\vspace{-.7\baselineskip}
   \caption{Network designs}
 \end{figure}
 
@@ -210,14 +243,17 @@ results.
 \includegraphics[width=\textwidth]{plot_0_01.pdf}
 \subcaption{Baseline (0.765)}
 \end{subfigure}
+\hspace{1pt}
 \begin{subfigure}[c]{0.3\columnwidth}
 \includegraphics[width=\textwidth]{plot_simple_0_01.pdf}
 \subcaption{Simple (0.683)}
 \end{subfigure}
+\hspace{2pt}
 \begin{subfigure}[c]{0.3\columnwidth}
 \includegraphics[width=\textwidth]{plot_complex_0_01.pdf}
 \subcaption{Complex (0.733)}
 \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Comparing networks and final validation accuracy}
 \label{part2:network}
 \end{figure}
@@ -240,10 +276,12 @@ part 1 of the assignment.
 \includegraphics[width=\textwidth]{plot_simple_0_0001.pdf}
 \subcaption{Too small}
 \end{subfigure}
+\hspace{2pt}
 \begin{subfigure}[c]{0.45\columnwidth}
 \includegraphics[width=\textwidth]{plot_0_5.pdf}
 \subcaption{Too high}
 \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Impact of extreme learning rate values}
 \label{part2:learning-rate}
 \end{figure}
@@ -267,10 +305,12 @@ learning rate.
 \includegraphics[width=\textwidth]{plot_0_01.pdf}
 \subcaption{Regular model}
 \end{subfigure}
+\hspace{2pt}
 \begin{subfigure}[c]{0.45\columnwidth}
 \includegraphics[width=\textwidth]{plot_complex_0_01.pdf}
 \subcaption{Complex model}
 \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Converging models}
 \label{part2:converging}
 \end{figure}
@@ -324,10 +364,12 @@ more and more with each epoch.
 \includegraphics[width=\textwidth]{plot_complex_0_05.pdf}
 \subcaption{Without augmentation}
 \end{subfigure}
+\hspace{2pt}
 \begin{subfigure}[c]{0.45\columnwidth}
 \includegraphics[width=\textwidth]{plot_augmented_complex_0_05.pdf}
 \subcaption{With augmentation}
 \end{subfigure}
+\vspace{-.7\baselineskip}
 \caption{Data augmentation}
 \label{part2:augmentation}
 \end{figure}
@@ -379,8 +421,16 @@ learning rate 0.05).
 \subsection{Early Stopping}
 
 Another approach to avoid overfitting is \emph{early stopping}.
-Here the model with the highest validation accuracy is
-chosen and not necessarily the last one.
+Normally this is implemented by stopping the training process
+once the validation accuracy is not growing for some time.
+
+Following the assignment text we chose a slightly different
+approach.
+We keep the model with the highest validation accuracy 
+and return it after training with 100 epochs.
+This way it will in all cases yield an improvement over
+the previous approach, which was just taking the model
+after the last epoch.
 
 For the baseline network this yields a validation accuracy
 of 0.770, for the simple network 0.693, and for the
