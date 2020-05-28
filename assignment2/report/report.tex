@@ -1,6 +1,7 @@
 % !TeX spellcheck = en_US
 \documentclass[sigconf,nonacm]{acmart}
 \usepackage{listings}
+\usepackage{subcaption}
 \settopmatter{printacmref=false}
 \pagestyle{empty}
 \AtBeginDocument{%
@@ -42,6 +43,38 @@ Finally, we were requested to experiment with various techniques for avoiding ov
 \section{Gradient Descent}
 
 \section{Network Architecture}
+
+For this part of the exercise we were experimenting with three convolutional neural networks.
+The first one, our baseline network, was based on the suggested network from the slides.
+
+As a second network we used a simplified version, with only one ``block'', and for comparison
+we also used a more complex one, with a third block.
+
+\begin{figure}[ht]
+\begin{subfigure}[c]{0.45\columnwidth}
+\includegraphics[width=\textwidth]{plot_simple_0.05.pdf}
+\subcaption{Model too simple}
+\end{subfigure}
+\begin{subfigure}[c]{0.45\columnwidth}
+\includegraphics[width=\textwidth]{plot_0.2.pdf}
+\subcaption{Learning rate too high}
+\end{subfigure}
+\caption{Diverging models}
+\label{part2:diverging}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{subfigure}[c]{0.45\columnwidth}
+\includegraphics[width=\textwidth]{plot_0.01.pdf}
+\subcaption{Regular model}
+\end{subfigure}
+\begin{subfigure}[c]{0.45\columnwidth}
+\includegraphics[width=\textwidth]{plot_complex_0.01.pdf}
+\subcaption{Complex model}
+\end{subfigure}
+\caption{Converging models}
+\label{part2:converging}
+\end{figure}
 
 \section{Avoiding of Overfitting}
 

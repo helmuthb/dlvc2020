@@ -3,6 +3,7 @@ import numpy as np
 
 from abc import ABCMeta, abstractmethod
 
+
 class Model(metaclass=ABCMeta):
     '''
     A machine learning model.
@@ -44,7 +45,8 @@ class Model(metaclass=ABCMeta):
         '''
         Predict target labels from input data.
         Data are the input data, with a shape compatible with input_shape().
-        The label array has shape (n, output_shape()) with n being the number of input samples.
+        The label array has shape (n, output_shape()) with n being the number
+        of input samples.
         Raises TypeError on invalid argument types.
         Raises ValueError on invalid argument values.
         Raises RuntimeError on other errors.

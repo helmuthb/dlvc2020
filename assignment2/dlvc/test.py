@@ -1,10 +1,7 @@
-
-from .model import Model
-from .batches import BatchGenerator
-
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
+
 
 class PerformanceMeasure(metaclass=ABCMeta):
     '''
@@ -22,7 +19,8 @@ class PerformanceMeasure(metaclass=ABCMeta):
     @abstractmethod
     def update(self, prediction: np.ndarray, target: np.ndarray):
         '''
-        Update the measure by comparing predicted data with ground-truth target data.
+        Update the measure by comparing predicted data with
+        ground-truth target data.
         Raises ValueError if the data shape or values are unsupported.
         '''
 
@@ -39,7 +37,8 @@ class PerformanceMeasure(metaclass=ABCMeta):
     @abstractmethod
     def __lt__(self, other) -> bool:
         '''
-        Return true if this performance measure is worse than another performance measure of the same type.
+        Return true if this performance measure is worse than
+        another performance measure of the same type.
         Raises TypeError if the types of both measures differ.
         '''
 
@@ -48,7 +47,8 @@ class PerformanceMeasure(metaclass=ABCMeta):
     @abstractmethod
     def __gt__(self, other) -> bool:
         '''
-        Return true if this performance measure is better than another performance measure of the same type.
+        Return true if this performance measure is better than
+        another performance measure of the same type.
         Raises TypeError if the types of both measures differ.
         '''
 
@@ -78,9 +78,12 @@ class Accuracy(PerformanceMeasure):
 
     def update(self, prediction: np.ndarray, target: np.ndarray):
         '''
-        Update the measure by comparing predicted data with ground-truth target data.
-        prediction must have shape (s,c) with each row being a class-score vector.
-        target must have shape (s,) and values between 0 and c-1 (true class labels).
+        Update the measure by comparing predicted data with
+        ground-truth target data.
+        prediction must have shape (s,c) with each row being a
+        class-score vector.
+        target must have shape (s,) and values between 0 and c-1
+        (true class labels).
         Raises ValueError if the data shape or values are unsupported.
         '''
 
@@ -98,7 +101,8 @@ class Accuracy(PerformanceMeasure):
         if len(target.shape) != 1:
             raise ValueError("`taget` must be a 1-dim array")
         if prediction.shape[0] != target.shape[0]:
-            raise ValueError("Both prediction and target must have the same number of rows")
+            raise ValueError(
+                "Both prediction and target must have the same number of rows")
         # 4. target must have values in the range 0 and c
         c = prediction.shape[1]
         if np.any(target < 0) or np.any(target > c-1):
@@ -114,7 +118,7 @@ class Accuracy(PerformanceMeasure):
         '''
         Return a string representation of the performance.
         '''
-        return f"accuracy: {self.accuracy()}"
+        return f"accuracy: {self.accuracy():.3}"
         # return something like "accuracy: 0.395"
 
     def __lt__(self, other) -> bool:
