@@ -72,8 +72,7 @@ class Fn:
         max_x2 = fn.shape[0]-1
         if loc.x1 < 0 or loc.x1 > max_x1 or loc.x2 < 0 or loc.x2 > max_x1:
             raise ValueError("Location is out of bounds")
-<<<<<<< HEAD
-            
+
         method = "interpolation"
         if method == "simple":
             return fn[round(loc.x1), round(loc.x2)]
@@ -94,24 +93,7 @@ class Fn:
             else:
                 f11 = fn[i1+1,i2+1]
             return f00*(1-x1)*(1-x2) + f10*x1*(1-x2) + f01*(1-x1)*x2 + f11*x1*x2
-=======
-        # using bilinear interpolation
-        # formula taken from Wikipedia
-        i1 = math.floor(loc.x1)
-        i2 = math.floor(loc.x2)
-        x1 = loc.x1 - i1
-        x2 = loc.x2 - i2
-        f00 = fn[i2, i1]
-        f10 = fn[i2+1, i1] if i1 < max_x1 else f00
-        f01 = fn[i2, i1+1] if i2 < max_x2 else f00
-        if i1 == max_x1:
-            f11 = f01
-        elif i2 == max_x2:
-            f11 = f10
-        else:
-            f11 = fn[i2+1, i1+1]
-        return f00*(1-x1)*(1-x2) + f10*x1*(1-x2) + f01*(1-x1)*x2 + f11*x1*x2
->>>>>>> 044bc5084ca1b469dfe0bb194c46247ad70aa517
+
 
     def grad(self, loc: Vec2) -> Vec2:
         '''

@@ -142,3 +142,10 @@ def rcrop(sz: int, pad: int, pad_mode: str) -> Op:
                 f"Sample too small ({sample.shape}) for cropping size {sz}")
 
     return op
+
+def rotate(deg:int, p:float) -> Op:
+    def op(sample: np.ndarray) -> np.ndarray:
+        if deg > 0:
+            sample = np.pad(sample, [pad, pad, 0], pad_mode)
+        
+    return op

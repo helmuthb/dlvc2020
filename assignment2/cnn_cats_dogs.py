@@ -219,9 +219,154 @@ class CatsDogsModelComplex(nn.Module):
         # run the steps ...
         return self.layers.forward(x)
 
+# add dropout layer
+class CatsDogsModelDropout(nn.Module):
+    def __init__(self):
+        super(CatsDogsModelDropout, self).__init__()
+        # Our network
+        self.layers = nn.Sequential(
+            # we start with a 7x7 kernel, padding 3, stride=2
+            # creating 64 feature maps
+            # (m, 3, 32, 32) -> (m, 64, 16, 16)
+            nn.Conv2d(3, 64, kernel_size=7, padding=3, stride=2),
+            # ReLU as activation
+            nn.ReLU(inplace=True),
+            # p – probability of an element to be zeroed, Default: 0.5
+            nn.Dropout(),
+            # and MaxPooling for dimension reduction
+            # (m, 64, 16, 16) -> (m, 64, 8, 8)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes a "block" - blowing up the features
+            # Step 1: Conv2D
+            # (m, 64, 8, 8) -> (m, 128, 8, 8)
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # p – probability of an element to be zeroed, Default: 0.5
+            nn.Dropout(),
+            # Step 2: another Conv2D
+            # (m, 128, 8, 8) -> (m, 128, 8, 8)
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # p – probability of an element to be zeroed
+            nn.Dropout(),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 128, 8, 8) -> (m, 128, 4, 4)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes another "block" - blowing up the features
+            # Step 1: Conv2D
+            # (m, 128, 4, 4) -> (m, 256, 4, 4)
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # p – probability of an element to be zeroed
+            nn.Dropout(),
+            # Step 2: another Conv2D
+            # (m, 256, 4, 4) -> (m, 256, 4, 4)
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # p – probability of an element to be zeroed
+            nn.Dropout(),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 256, 4, 4) -> (m, 256, 2, 2)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # Average pool
+            # (m, 256, 2, 2) -> (m, 256, 1, 1)
+            nn.AvgPool2d(kernel_size=2),
+            # Flatten
+            # (m, 256, 1, 1) -> (m, 256)
+            nn.Flatten(),
+            # Linear layer for 2 classes
+            # (m, 256) -> (m, 2)
+            nn.Linear(256, 2)
+        )
+
+    def forward(self, x):
+        # run the steps ...
+        return self.layers.forward(x)
+    
+    
+# add dropout layer before last (dense) layer
+class CatsDogsModelDropout2(nn.Module):
+    def __init__(self):
+        super(CatsDogsModelDropout2, self).__init__()
+        # Our network
+        self.layers = nn.Sequential(
+            # we start with a 7x7 kernel, padding 3, stride=2
+            # creating 64 feature maps
+            # (m, 3, 32, 32) -> (m, 64, 16, 16)
+            nn.Conv2d(3, 64, kernel_size=7, padding=3, stride=2),
+            # ReLU as activation
+            nn.ReLU(inplace=True),
+            # and MaxPooling for dimension reduction
+            # (m, 64, 16, 16) -> (m, 64, 8, 8)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes a "block" - blowing up the features
+            # Step 1: Conv2D
+            # (m, 64, 8, 8) -> (m, 128, 8, 8)
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 2: another Conv2D
+            # (m, 128, 8, 8) -> (m, 128, 8, 8)
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 128, 8, 8) -> (m, 128, 4, 4)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # now comes another "block" - blowing up the features
+            # Step 1: Conv2D
+            # (m, 128, 4, 4) -> (m, 256, 4, 4)
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 2: another Conv2D
+            # (m, 256, 4, 4) -> (m, 256, 4, 4)
+            nn.Conv2d(256, 256, kernel_size=3, padding=1),
+            # another ReLU
+            nn.ReLU(inplace=True),
+            # Step 3: MaxPooling for dimension reduction
+            # (m, 256, 4, 4) -> (m, 256, 2, 2)
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            # Average pool
+            # (m, 256, 2, 2) -> (m, 256, 1, 1)
+            nn.AvgPool2d(kernel_size=2),
+            # Flatten
+            # (m, 256, 1, 1) -> (m, 256)
+            nn.Flatten(),
+            # p – probability of an element to be zeroed
+            nn.Dropout(0.25),
+            # Linear layer for 2 classes
+            # (m, 256) -> (m, 2)
+            nn.Linear(256, 2)
+        )
+
+    def forward(self, x):
+        # run the steps ...
+        return self.layers.forward(x)
+
+# =============================================================================
+# # loading the pretrained model
+# vgg16 = models.vgg16_bn(pretrained=True)
+# # Freeze model weights
+# for param in model.parameters():
+#     param.requires_grad = False
+# # checking if GPU is available
+# if torch.cuda.is_available():
+#     model = model.cuda()
+# # Add on classifier
+# model.classifier[6] = Sequential(
+#                       Linear(4096, 2))
+# for param in model.classifier[6].parameters():
+#     param.requires_grad = True
+# =============================================================================
+
 
 # Learning rate to use
-lr = 0.0001
+lr = 0.01
 # weight decay to use
 wd = 0.0
 # Step 4: wrap into CnnClassifier
@@ -249,6 +394,30 @@ if torch.cuda.is_available():
     netComplex.cuda()
 clfComplex = CnnClassifier(
     netComplex,
+    (0, 3, 32, 32),
+    train_data.num_classes(),
+    lr,
+    wd
+)
+
+netDropout = CatsDogsModelDropout()
+# check whether GPU support is available
+if torch.cuda.is_available():
+    netDropout.cuda()
+clfDropout = CnnClassifier(
+    netDropout,
+    (0, 3, 32, 32),
+    train_data.num_classes(),
+    lr,
+    wd
+)
+
+netDropout2 = CatsDogsModelDropout2()
+# check whether GPU support is available
+if torch.cuda.is_available():
+    netDropout2.cuda()
+clfDropout2 = CnnClassifier(
+    netDropout2,
     (0, 3, 32, 32),
     train_data.num_classes(),
     lr,
@@ -292,12 +461,16 @@ def train_model(clf: CnnClassifier, results_file: TextIO) -> TrainedModel:
 
 
 with open(f'results_{lr}.csv', 'wt') as results_file:
-    model = train_model(clf, results_file)
-with open(f'results_simple_{lr}.csv', 'wt') as results_file:
-    modelSimple = train_model(clfSimple, results_file)
-with open(f'results_complex_{lr}.csv', 'wt') as results_file:
-    modelComplex = train_model(clfComplex, results_file)
+    model = train_model(clfDropout, results_file)
+# =============================================================================
+# with open(f'results_simple_{lr}.csv', 'wt') as results_file:
+#     modelSimple = train_model(clfSimple, results_file)
+# with open(f'results_complex_{lr}.csv', 'wt') as results_file:
+#     modelComplex = train_model(clfComplex, results_file)
+# =============================================================================
 
-print(f"Model: {model.accuracy}")
-print(f"Simple Model: {modelSimple.accuracy}")
-print(f"Complex Model: {modelComplex.accuracy}")
+print(f"Model with dropout: {model.accuracy}")
+# =============================================================================
+# print(f"Simple Model: {modelSimple.accuracy}")
+# print(f"Complex Model: {modelComplex.accuracy}")
+# =============================================================================

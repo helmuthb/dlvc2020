@@ -41,8 +41,11 @@ def plot_file(title: str, in_file: str, out_file: str) -> None:
     plt.close()
 
 
-for lr in [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005,
-           0.01, 0.02, 0.05, 0.1, 0.2, 0.5]:
-    plot_file(f'lr = {lr}', f'../results_{lr}.csv', f'plot_{lr}.pdf')
-    plot_file(f'lr = {lr}, simple model', f'../results_simple_{lr}.csv', f'plot_simple_{lr}.pdf')
-    plot_file(f'lr = {lr}, complex model', f'../results_complex_{lr}.csv', f'plot_complex_{lr}.pdf')
+# =============================================================================
+# for lr in [0.0001, 0.0002, 0.0005, 0.001, 0.002, 0.005,
+#            0.01, 0.02, 0.05, 0.1, 0.2, 0.5]:
+#     plot_file(f'lr = {lr}', f'../results_{lr}.csv', f'plot_{lr}.pdf')
+#     plot_file(f'lr = {lr}, simple model', f'../results_simple_{lr}.csv', f'plot_simple_{lr}.pdf')
+#     plot_file(f'lr = {lr}, complex model', f'../results_complex_{lr}.csv', f'plot_complex_{lr}.pdf')
+# =============================================================================
+plot_file(f'dropout = 0.25, lr = 0.01', f'../results_drop0.25_lr0.01.csv', f'plot_drop0.25_lr0.01.pdf')
