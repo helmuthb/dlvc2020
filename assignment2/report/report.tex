@@ -1,6 +1,7 @@
 % !TeX spellcheck = en_US
 \documentclass[sigconf,nonacm]{acmart}
 \usepackage{listings}
+\usepackage{tabularx}
 \usepackage{subcaption}
 \settopmatter{printacmref=false}
 \pagestyle{empty}
@@ -13,7 +14,7 @@
 \begin{document}
 \title{Deep Learning for Visual Computing}
 \subtitle{Group 12, Exercise 2: Iterative Optimization and Parametric Models}
-\author{SHU Yuting}
+\author{Yuting SHU}
 \email{e11931687@student.tuwien.ac.at}
 \affiliation{Mat.Nr. 11931687}
 \author{Helmuth BREITENFELLNER}
@@ -419,7 +420,8 @@ learning rate 0.05).
 
 In addition we also experimented with performing a dropout
 after each ReLU layer.
-In comparison the results were however not significantly different.
+And the results were very promising, therefore we added it as a
+hyperparameter when searching for the best model.
 
 \subsection{Early Stopping}
 
@@ -456,9 +458,10 @@ by random cropping resulted in the highest validation
 accuracy.
 
 With a combination of reduced data augmentation (only random
-crops), a learning rate of 0.005 and a weight decay of 0.001
+crops), a learning rate of 0.02 and
+a dropout after each layer of 25\% 
 together with early stopping
-we managed to achieve a validation accuracy of 0.807.
+we managed to achieve a validation accuracy of 0.817.
 This model is part of the submission as ``\texttt{best\_model.pt}.''
 
 \section{Transfer Learning}
@@ -469,19 +472,26 @@ The idea here is to use weights established from training
 of larger data sets and to amend these weights with
 a set of final layers which are trained for the purpose.
 
-We chose ResNet18 (\cite{resnet2015}) as our learned
+We chose ResNet18 (\cite{resnet2015}) as our pretrained
 model.
-This yielded way superior results to our networks.
+This yielded way superior results compared to our networks.
 One epoch was already sufficient for a validation accuracy
 of more than 0.8.
+At the same time, the training loss was not even approaching
+zero - a sign of no overfitting.
 The final validation accuracy reached 0.842 (learning
 rate 0.01), and when combined with early stopping the best
 model had a validation accuracy of 0.865.
 These results were achieved without additional fine-tuning, like
 data augmentation, weight decay or dropout.
-When running with data augmentation and weight decay (using the
-same settings as for the best non-transfer model) we reached even
-a validation accuracy of 0.870.
+When running with data augmentation we reached even
+a validation accuracy of 0.868.
+
+The learning process indicated that one layer is too simple
+for the network. We therefore made another attempt with two
+linear dense layers at the end (and a ReLU activation in between).
+This allowed us to bring the validation accuracy to a level of 0.882.
+The model parameters were saved as file ``\texttt{transfer\_model.pt}.''
 
 \begin{figure}[ht]
 \begin{subfigure}[c]{0.45\columnwidth}
@@ -497,6 +507,97 @@ a validation accuracy of 0.870.
 \caption{Best models achieved}
 \label{part3:best}
 \end{figure}
+
+\newpage
+\section{Index}
+Results table for baseline model
+
+\begin{tabular}{| m{1cm} | m{1cm}| m{1cm} | m{1cm}| m{1cm}|} 
+\hline
+Learning rate & Data Augmentation & Regular- ization & Early Stopping & val acc\\ 
+\hline
+0.01 & - & - & -  & 0.765\\ 
+\hline
+0.005 & - & wd=0.001 & -  & 0.779\\ 
+\hline
+0.01 & - & - & Yes &  0.770\\ 
+\hline
+0.002 & - & Dropout (one layer), p=0.2 & - &  0.777\\ 
+\hline
+0.01 & - & Dropout (multiple layers), p=0.25 & - &  0.777\\ 
+\hline
+0.01 & - & Dropout (multiple layers), p=0.25 & Yes &  0.795\\ 
+\hline
+0.02 & Crop & Dropout (multiple layers), p=0.25 & Yes &  \textcolor{red}{0.817}\\ 
+\hline
+
+\end{tabular}
+
+\vspace{5mm} %5mm vertical space
+Results table for transfer learning (1 final layer)
+
+\begin{tabular}{| m{1cm} | m{1cm}| m{1cm} | m{1cm}|  m{1cm}|} 
+\hline
+Learning rate & Data Augmentation & Regular- ization & Early Stopping  & val acc\\ 
+\hline
+0.01 & - & - & -  & 0.842\\ 
+\hline
+0.01 & - & - & Yes  & 0.865\\ 
+\hline
+0.02 & Crop & - & Yes  & \textcolor{red}{0.868}\\ 
+\hline
+
+\end{tabular}
+
+\vspace{5mm} %5mm vertical space
+Results table for transfer learning (2 final layers)
+
+\begin{tabular}{| m{1cm} | m{1cm}| m{1cm} | m{1cm}|  m{1cm}|} 
+\hline
+Learning rate & Data Augmentation & Regular- ization & Early Stopping  & val acc\\ 
+\hline
+0.02 & Crop & - & Yes  & \textcolor{red}{0.882}\\ 
+\hline
+
+
+\end{tabular}
+
+\vspace{5mm} %5mm vertical space
+
+Results table for simple model
+
+\begin{tabular}{| m{1cm} | m{1cm}| m{1cm} | m{1cm}| m{1cm}|} 
+\hline
+Learning rate & Data Augmentation & Regular- ization & Early Stopping  & val acc\\ 
+\hline
+0.01 & - & - & -  & 0.683\\ 
+\hline
+0.1 & - & Dropout (one layer), p=0.1 & -  & 0.689\\ 
+\hline
+0.01 & - & - & Yes  & 0.693\\ 
+\hline
+
+\end{tabular}
+
+\vspace{7mm} %5mm vertical space
+Results table for complex model
+
+\begin{tabular}{|m{1cm} | m{1cm}| m{1cm} | m{1cm}| m{1cm}|} 
+\hline
+Learning rate & Data Augmentation & Regular- ization & Early Stopping & val acc\\ 
+\hline
+0.01 & - & - & -  & 0.733\\ 
+\hline
+0.05 & Yes & - & - & 0.77\\ 
+\hline
+0.005 & - & wd=0.001 & - & 0.748\\ 
+\hline
+0.05 & - & Dropout (one layer), p=0.2 & -  & 0.757\\ 
+\hline
+0.01 & - & - & Yes  & 0.758\\ 
+\hline
+\end{tabular}
+
 
 
 \bibliographystyle{ACM-Reference-Format}
