@@ -210,17 +210,21 @@ if __name__ == '__main__':
     # Perform gradient descent using a PyTorch optimizer
     # See https://pytorch.org/docs/stable/optim.html for how to use it
     step = 0
-    color1 = (255, 255, 255)
-    color2 = (128, 128, 128)
     startPos = (int(loc[0].item()), int(loc[1].item()))
     cv2.drawMarker(vis, startPos, (0, 0, 255),
-                   markerType=cv2.MARKER_TILTED_CROSS)
+                   markerType=cv2.MARKER_TILTED_CROSS,
+                   thickness=2)
+    error = False
     while True:
         step += 1
-        color = color1 if int(step/10) % 2 == 0 else color2
         old = (int(loc[0].item()), int(loc[1].item()))
-        optimizer.zero_grad()
-        value = AutogradFn.apply(fn, loc)
+        try:
+            optimizer.zero_grad()
+            value = AutogradFn.apply(fn, loc)
+        except:
+            # break the loop with error
+            error = True
+            break
         # push value on heap
         if len(best_n) >= n:
             worst = heapq.heappushpop(best_n, -value)
@@ -233,10 +237,13 @@ if __name__ == '__main__':
         optimizer.step()
         new = (int(loc[0].item()), int(loc[1].item()))
         # Visualize each iteration by drawing on vis
-        cv2.line(vis, old, new, color, 1)
+        cv2.line(vis, old, new, (255, 255, 255), 2)
         cv2.imshow('Progress', vis)
         cv2.waitKey(50)  # 20 fps, tune according to your liking
-    cv2.drawMarker(vis, new, (0, 255, 0),
-                   markerType=cv2.MARKER_TILTED_CROSS)
+    # mark final point if no error
+    if not error:
+        cv2.drawMarker(vis, new, (0, 255, 0),
+                       markerType=cv2.MARKER_TILTED_CROSS,
+                       thickness=2)
     if (args.out):
         cv2.imwrite(args.out, vis)
