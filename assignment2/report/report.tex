@@ -315,8 +315,7 @@ learning rate.
 \label{part2:converging}
 \end{figure}
 
-\section{Avoiding of Overfitting}
-
+\section{Addressing Overfitting}
 
 Overall, we reached a final validation accuracy of 0.77.
 The baseline and complex networks easily reached a
@@ -418,6 +417,10 @@ for the simple network 0.689 (10\% dropout, learning rate 0.1),
 and for the complex network 0.757 (20\% dropout,
 learning rate 0.05).
 
+In addition we also experimented with performing a dropout
+after each ReLU layer.
+In comparison the results were however not significantly different.
+
 \subsection{Early Stopping}
 
 Another approach to avoid overfitting is \emph{early stopping}.
@@ -445,6 +448,18 @@ a positive impact.
 However, weight decay and dropout were competing
 methods, and so we analysed them in combination,
 also with and without data augmentation.
+We also selectively turned on
+and off the various augmentation techniques,
+observing which ones brought the best improvement.
+Here we found that only performing data augmentation
+by random cropping resulted in the highest validation
+accuracy.
+
+With a combination of reduced data augmentation (only random
+crops), a learning rate of 0.005 and a weight decay of 0.001
+together with early stopping
+we managed to achieve a validation accuracy of 0.807.
+This model is part of the submission as ``\texttt{best\_model.pt}.''
 
 \section{Transfer Learning}
 
@@ -457,12 +472,32 @@ a set of final layers which are trained for the purpose.
 We chose ResNet18 (\cite{resnet2015}) as our learned
 model.
 This yielded way superior results to our networks.
+One epoch was already sufficient for a validation accuracy
+of more than 0.8.
 The final validation accuracy reached 0.842 (learning
 rate 0.01), and when combined with early stopping the best
 model had a validation accuracy of 0.865.
+These results were achieved without additional fine-tuning, like
+data augmentation, weight decay or dropout.
+When running with data augmentation and weight decay (using the
+same settings as for the best non-transfer model) we reached even
+a validation accuracy of 0.870.
 
-Clearly transfer learning is the best approach for
-situations with limited training data.
+\begin{figure}[ht]
+\begin{subfigure}[c]{0.45\columnwidth}
+\includegraphics[width=\textwidth]{plot_best.pdf}
+\subcaption{Without transfer learning}
+\end{subfigure}
+\hspace{2pt}
+\begin{subfigure}[c]{0.45\columnwidth}
+\includegraphics[width=\textwidth]{plot_transfer.pdf}
+\subcaption{With transfer learning}
+\end{subfigure}
+\vspace{-.7\baselineskip}
+\caption{Best models achieved}
+\label{part3:best}
+\end{figure}
+
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{report}
